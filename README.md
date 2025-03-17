@@ -24,3 +24,13 @@
 
 - **❗接收到的邮件内容仅能保留10天**
 - **❗随机生成的邮箱地址任何人都可以使用，请勿用于注册重要账号**
+
+---
+
+<a href="https://www.star-history.com/#sunls24/tmail&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=sunls24/tmail&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=sunls24/tmail&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=sunls24/tmail&type=Date" />
+ </picture>
+</a>
