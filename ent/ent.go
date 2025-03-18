@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 
 	"entgo.io/ent"
@@ -73,7 +74,8 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			envelope.Table: envelope.ValidColumn,
+			attachment.Table: attachment.ValidColumn,
+			envelope.Table:   envelope.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import Actions from "@/components/Actions.tsx"
 import type { Envelope } from "@/lib/types.ts"
-import { fetchError, fmtDate, fmtFrom } from "@/lib/utils.ts"
+import { fetchError, fmtDate, fmtFrom, fmtString } from "@/lib/utils.ts"
 import { toast } from "sonner"
 import { useStore } from "@nanostores/react"
 import { $address, initStore } from "@/lib/store/store.ts"
@@ -91,6 +91,7 @@ function Content({ lang }: { lang: string }) {
     e.animate = true
     setEnvelopes([e, ...envelopes])
     setLatestId(e.id)
+    toast.success(fmtString(t("receiveNew"), e.from))
   }
 
   function copyToClipboard() {

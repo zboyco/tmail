@@ -11,11 +11,13 @@ import (
 
 	"tmail/ent/migrate"
 
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -23,6 +25,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Attachment is the client for interacting with the Attachment builders.
+	Attachment *AttachmentClient
 	// Envelope is the client for interacting with the Envelope builders.
 	Envelope *EnvelopeClient
 }
@@ -36,6 +40,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Attachment = NewAttachmentClient(c.config)
 	c.Envelope = NewEnvelopeClient(c.config)
 }
 
@@ -127,9 +132,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Envelope: NewEnvelopeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Attachment: NewAttachmentClient(cfg),
+		Envelope:   NewEnvelopeClient(cfg),
 	}, nil
 }
 
@@ -147,16 +153,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Envelope: NewEnvelopeClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Attachment: NewAttachmentClient(cfg),
+		Envelope:   NewEnvelopeClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Envelope.
+//		Attachment.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -178,22 +185,175 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Attachment.Use(hooks...)
 	c.Envelope.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Attachment.Intercept(interceptors...)
 	c.Envelope.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AttachmentMutation:
+		return c.Attachment.mutate(ctx, m)
 	case *EnvelopeMutation:
 		return c.Envelope.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AttachmentClient is a client for the Attachment schema.
+type AttachmentClient struct {
+	config
+}
+
+// NewAttachmentClient returns a client for the Attachment from the given config.
+func NewAttachmentClient(c config) *AttachmentClient {
+	return &AttachmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `attachment.Hooks(f(g(h())))`.
+func (c *AttachmentClient) Use(hooks ...Hook) {
+	c.hooks.Attachment = append(c.hooks.Attachment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `attachment.Intercept(f(g(h())))`.
+func (c *AttachmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Attachment = append(c.inters.Attachment, interceptors...)
+}
+
+// Create returns a builder for creating a Attachment entity.
+func (c *AttachmentClient) Create() *AttachmentCreate {
+	mutation := newAttachmentMutation(c.config, OpCreate)
+	return &AttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Attachment entities.
+func (c *AttachmentClient) CreateBulk(builders ...*AttachmentCreate) *AttachmentCreateBulk {
+	return &AttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AttachmentClient) MapCreateBulk(slice any, setFunc func(*AttachmentCreate, int)) *AttachmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AttachmentCreateBulk{err: fmt.Errorf("calling to AttachmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AttachmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Attachment.
+func (c *AttachmentClient) Update() *AttachmentUpdate {
+	mutation := newAttachmentMutation(c.config, OpUpdate)
+	return &AttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AttachmentClient) UpdateOne(a *Attachment) *AttachmentUpdateOne {
+	mutation := newAttachmentMutation(c.config, OpUpdateOne, withAttachment(a))
+	return &AttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AttachmentClient) UpdateOneID(id string) *AttachmentUpdateOne {
+	mutation := newAttachmentMutation(c.config, OpUpdateOne, withAttachmentID(id))
+	return &AttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Attachment.
+func (c *AttachmentClient) Delete() *AttachmentDelete {
+	mutation := newAttachmentMutation(c.config, OpDelete)
+	return &AttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AttachmentClient) DeleteOne(a *Attachment) *AttachmentDeleteOne {
+	return c.DeleteOneID(a.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AttachmentClient) DeleteOneID(id string) *AttachmentDeleteOne {
+	builder := c.Delete().Where(attachment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AttachmentDeleteOne{builder}
+}
+
+// Query returns a query builder for Attachment.
+func (c *AttachmentClient) Query() *AttachmentQuery {
+	return &AttachmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAttachment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Attachment entity by its id.
+func (c *AttachmentClient) Get(ctx context.Context, id string) (*Attachment, error) {
+	return c.Query().Where(attachment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AttachmentClient) GetX(ctx context.Context, id string) *Attachment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOwner queries the owner edge of a Attachment.
+func (c *AttachmentClient) QueryOwner(a *Attachment) *EnvelopeQuery {
+	query := (&EnvelopeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(attachment.Table, attachment.FieldID, id),
+			sqlgraph.To(envelope.Table, envelope.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, attachment.OwnerTable, attachment.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AttachmentClient) Hooks() []Hook {
+	return c.hooks.Attachment
+}
+
+// Interceptors returns the client interceptors.
+func (c *AttachmentClient) Interceptors() []Interceptor {
+	return c.inters.Attachment
+}
+
+func (c *AttachmentClient) mutate(ctx context.Context, m *AttachmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Attachment mutation op: %q", m.Op())
 	}
 }
 
@@ -305,6 +465,22 @@ func (c *EnvelopeClient) GetX(ctx context.Context, id int) *Envelope {
 	return obj
 }
 
+// QueryAttachments queries the attachments edge of a Envelope.
+func (c *EnvelopeClient) QueryAttachments(e *Envelope) *AttachmentQuery {
+	query := (&AttachmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := e.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(envelope.Table, envelope.FieldID, id),
+			sqlgraph.To(attachment.Table, attachment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, envelope.AttachmentsTable, envelope.AttachmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(e.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *EnvelopeClient) Hooks() []Hook {
 	return c.hooks.Envelope
@@ -333,9 +509,9 @@ func (c *EnvelopeClient) mutate(ctx context.Context, m *EnvelopeMutation) (Value
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Envelope []ent.Hook
+		Attachment, Envelope []ent.Hook
 	}
 	inters struct {
-		Envelope []ent.Interceptor
+		Attachment, Envelope []ent.Interceptor
 	}
 )

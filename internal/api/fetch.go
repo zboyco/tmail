@@ -15,7 +15,7 @@ func Fetch(ctx *Context) error {
 		return ctx.Bad("not found to address")
 	}
 	admin := to == ctx.AdminAddress
-	query := ctx.Envelope.Query().
+	query := ctx.ent.Envelope.Query().
 		Select(envelope.FieldID, envelope.FieldTo, envelope.FieldFrom, envelope.FieldSubject, envelope.FieldCreatedAt).
 		Order(ent.Desc(envelope.FieldID))
 	if !admin {
@@ -39,7 +39,7 @@ func FetchDetail(ctx *Context) error {
 	if err != nil {
 		return ctx.Bad("invalid id param: " + idStr)
 	}
-	one, err := ctx.Envelope.Query().
+	one, err := ctx.ent.Envelope.Query().
 		Select(envelope.FieldContent).
 		Where(envelope.ID(id)).
 		Only(ctx.Request().Context())
@@ -65,7 +65,7 @@ func FetchLatest(ctx *Context) error {
 		if err != nil {
 			return ctx.Bad("invalid id param: " + idStr)
 		}
-		one, err := ctx.Envelope.Query().
+		one, err := ctx.ent.Envelope.Query().
 			Select(envelope.FieldID, envelope.FieldTo, envelope.FieldFrom, envelope.FieldSubject, envelope.FieldCreatedAt).
 			Where(envelope.IDGT(id), envelope.To(to)).
 			Order(ent.Asc(envelope.FieldID)).

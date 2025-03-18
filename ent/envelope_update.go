@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 	"tmail/ent/predicate"
 
@@ -98,9 +99,45 @@ func (eu *EnvelopeUpdate) SetNillableCreatedAt(t *time.Time) *EnvelopeUpdate {
 	return eu
 }
 
+// AddAttachmentIDs adds the "attachments" edge to the Attachment entity by IDs.
+func (eu *EnvelopeUpdate) AddAttachmentIDs(ids ...string) *EnvelopeUpdate {
+	eu.mutation.AddAttachmentIDs(ids...)
+	return eu
+}
+
+// AddAttachments adds the "attachments" edges to the Attachment entity.
+func (eu *EnvelopeUpdate) AddAttachments(a ...*Attachment) *EnvelopeUpdate {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return eu.AddAttachmentIDs(ids...)
+}
+
 // Mutation returns the EnvelopeMutation object of the builder.
 func (eu *EnvelopeUpdate) Mutation() *EnvelopeMutation {
 	return eu.mutation
+}
+
+// ClearAttachments clears all "attachments" edges to the Attachment entity.
+func (eu *EnvelopeUpdate) ClearAttachments() *EnvelopeUpdate {
+	eu.mutation.ClearAttachments()
+	return eu
+}
+
+// RemoveAttachmentIDs removes the "attachments" edge to Attachment entities by IDs.
+func (eu *EnvelopeUpdate) RemoveAttachmentIDs(ids ...string) *EnvelopeUpdate {
+	eu.mutation.RemoveAttachmentIDs(ids...)
+	return eu
+}
+
+// RemoveAttachments removes "attachments" edges to Attachment entities.
+func (eu *EnvelopeUpdate) RemoveAttachments(a ...*Attachment) *EnvelopeUpdate {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return eu.RemoveAttachmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -181,6 +218,51 @@ func (eu *EnvelopeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := eu.mutation.CreatedAt(); ok {
 		_spec.SetField(envelope.FieldCreatedAt, field.TypeTime, value)
+	}
+	if eu.mutation.AttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !eu.mutation.AttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.AttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -272,9 +354,45 @@ func (euo *EnvelopeUpdateOne) SetNillableCreatedAt(t *time.Time) *EnvelopeUpdate
 	return euo
 }
 
+// AddAttachmentIDs adds the "attachments" edge to the Attachment entity by IDs.
+func (euo *EnvelopeUpdateOne) AddAttachmentIDs(ids ...string) *EnvelopeUpdateOne {
+	euo.mutation.AddAttachmentIDs(ids...)
+	return euo
+}
+
+// AddAttachments adds the "attachments" edges to the Attachment entity.
+func (euo *EnvelopeUpdateOne) AddAttachments(a ...*Attachment) *EnvelopeUpdateOne {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return euo.AddAttachmentIDs(ids...)
+}
+
 // Mutation returns the EnvelopeMutation object of the builder.
 func (euo *EnvelopeUpdateOne) Mutation() *EnvelopeMutation {
 	return euo.mutation
+}
+
+// ClearAttachments clears all "attachments" edges to the Attachment entity.
+func (euo *EnvelopeUpdateOne) ClearAttachments() *EnvelopeUpdateOne {
+	euo.mutation.ClearAttachments()
+	return euo
+}
+
+// RemoveAttachmentIDs removes the "attachments" edge to Attachment entities by IDs.
+func (euo *EnvelopeUpdateOne) RemoveAttachmentIDs(ids ...string) *EnvelopeUpdateOne {
+	euo.mutation.RemoveAttachmentIDs(ids...)
+	return euo
+}
+
+// RemoveAttachments removes "attachments" edges to Attachment entities.
+func (euo *EnvelopeUpdateOne) RemoveAttachments(a ...*Attachment) *EnvelopeUpdateOne {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return euo.RemoveAttachmentIDs(ids...)
 }
 
 // Where appends a list predicates to the EnvelopeUpdate builder.
@@ -385,6 +503,51 @@ func (euo *EnvelopeUpdateOne) sqlSave(ctx context.Context) (_node *Envelope, err
 	}
 	if value, ok := euo.mutation.CreatedAt(); ok {
 		_spec.SetField(envelope.FieldCreatedAt, field.TypeTime, value)
+	}
+	if euo.mutation.AttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedAttachmentsIDs(); len(nodes) > 0 && !euo.mutation.AttachmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.AttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Envelope{config: euo.config}
 	_spec.Assign = _node.assignValues

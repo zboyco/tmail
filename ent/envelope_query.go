@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 	"tmail/ent/predicate"
 
@@ -18,10 +20,11 @@ import (
 // EnvelopeQuery is the builder for querying Envelope entities.
 type EnvelopeQuery struct {
 	config
-	ctx        *QueryContext
-	order      []envelope.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Envelope
+	ctx             *QueryContext
+	order           []envelope.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Envelope
+	withAttachments *AttachmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +59,28 @@ func (eq *EnvelopeQuery) Unique(unique bool) *EnvelopeQuery {
 func (eq *EnvelopeQuery) Order(o ...envelope.OrderOption) *EnvelopeQuery {
 	eq.order = append(eq.order, o...)
 	return eq
+}
+
+// QueryAttachments chains the current query on the "attachments" edge.
+func (eq *EnvelopeQuery) QueryAttachments() *AttachmentQuery {
+	query := (&AttachmentClient{config: eq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := eq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := eq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(envelope.Table, envelope.FieldID, selector),
+			sqlgraph.To(attachment.Table, attachment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, envelope.AttachmentsTable, envelope.AttachmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Envelope entity from the query.
@@ -245,15 +270,27 @@ func (eq *EnvelopeQuery) Clone() *EnvelopeQuery {
 		return nil
 	}
 	return &EnvelopeQuery{
-		config:     eq.config,
-		ctx:        eq.ctx.Clone(),
-		order:      append([]envelope.OrderOption{}, eq.order...),
-		inters:     append([]Interceptor{}, eq.inters...),
-		predicates: append([]predicate.Envelope{}, eq.predicates...),
+		config:          eq.config,
+		ctx:             eq.ctx.Clone(),
+		order:           append([]envelope.OrderOption{}, eq.order...),
+		inters:          append([]Interceptor{}, eq.inters...),
+		predicates:      append([]predicate.Envelope{}, eq.predicates...),
+		withAttachments: eq.withAttachments.Clone(),
 		// clone intermediate query.
 		sql:  eq.sql.Clone(),
 		path: eq.path,
 	}
+}
+
+// WithAttachments tells the query-builder to eager-load the nodes that are connected to
+// the "attachments" edge. The optional arguments are used to configure the query builder of the edge.
+func (eq *EnvelopeQuery) WithAttachments(opts ...func(*AttachmentQuery)) *EnvelopeQuery {
+	query := (&AttachmentClient{config: eq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withAttachments = query
+	return eq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,8 +369,11 @@ func (eq *EnvelopeQuery) prepareQuery(ctx context.Context) error {
 
 func (eq *EnvelopeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Envelope, error) {
 	var (
-		nodes = []*Envelope{}
-		_spec = eq.querySpec()
+		nodes       = []*Envelope{}
+		_spec       = eq.querySpec()
+		loadedTypes = [1]bool{
+			eq.withAttachments != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Envelope).scanValues(nil, columns)
@@ -341,6 +381,7 @@ func (eq *EnvelopeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Env
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Envelope{config: eq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,7 +393,46 @@ func (eq *EnvelopeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Env
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := eq.withAttachments; query != nil {
+		if err := eq.loadAttachments(ctx, query, nodes,
+			func(n *Envelope) { n.Edges.Attachments = []*Attachment{} },
+			func(n *Envelope, e *Attachment) { n.Edges.Attachments = append(n.Edges.Attachments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (eq *EnvelopeQuery) loadAttachments(ctx context.Context, query *AttachmentQuery, nodes []*Envelope, init func(*Envelope), assign func(*Envelope, *Attachment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Envelope)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Attachment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(envelope.AttachmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.envelope_attachments
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "envelope_attachments" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "envelope_attachments" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (eq *EnvelopeQuery) sqlCount(ctx context.Context) (int, error) {

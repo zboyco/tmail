@@ -42,6 +42,7 @@ func Publish(e *ent.Envelope) {
 	if len(subscribers) == 0 || (len(subscribers[e.To]) == 0 && len(subscribers[SubAll]) == 0) {
 		return
 	}
+	e.Content = ""
 	m.RLock()
 	defer m.RUnlock()
 	for _, sub := range subscribers[e.To] {

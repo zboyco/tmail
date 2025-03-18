@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -23,8 +24,17 @@ const (
 	FieldContent = "content"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// EdgeAttachments holds the string denoting the attachments edge name in mutations.
+	EdgeAttachments = "attachments"
 	// Table holds the table name of the envelope in the database.
 	Table = "envelopes"
+	// AttachmentsTable is the table that holds the attachments relation/edge.
+	AttachmentsTable = "attachments"
+	// AttachmentsInverseTable is the table name for the Attachment entity.
+	// It exists in this package in order to avoid circular dependency with the "attachment" package.
+	AttachmentsInverseTable = "attachments"
+	// AttachmentsColumn is the table column denoting the attachments relation/edge.
+	AttachmentsColumn = "envelope_attachments"
 )
 
 // Columns holds all SQL columns for envelope fields.
@@ -91,4 +101,25 @@ func ByContent(opts ...sql.OrderTermOption) OrderOption {
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByAttachmentsCount orders the results by attachments count.
+func ByAttachmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAttachmentsStep(), opts...)
+	}
+}
+
+// ByAttachments orders the results by attachments terms.
+func ByAttachments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAttachmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newAttachmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AttachmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AttachmentsTable, AttachmentsColumn),
+	)
 }

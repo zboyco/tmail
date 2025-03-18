@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Attachment is the predicate function for attachment builders.
+type Attachment func(*sql.Selector)
+
 // Envelope is the predicate function for envelope builders.
 type Envelope func(*sql.Selector)

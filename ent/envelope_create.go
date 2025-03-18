@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -56,6 +57,21 @@ func (ec *EnvelopeCreate) SetNillableCreatedAt(t *time.Time) *EnvelopeCreate {
 		ec.SetCreatedAt(*t)
 	}
 	return ec
+}
+
+// AddAttachmentIDs adds the "attachments" edge to the Attachment entity by IDs.
+func (ec *EnvelopeCreate) AddAttachmentIDs(ids ...string) *EnvelopeCreate {
+	ec.mutation.AddAttachmentIDs(ids...)
+	return ec
+}
+
+// AddAttachments adds the "attachments" edges to the Attachment entity.
+func (ec *EnvelopeCreate) AddAttachments(a ...*Attachment) *EnvelopeCreate {
+	ids := make([]string, len(a))
+	for i := range a {
+		ids[i] = a[i].ID
+	}
+	return ec.AddAttachmentIDs(ids...)
 }
 
 // Mutation returns the EnvelopeMutation object of the builder.
@@ -181,6 +197,22 @@ func (ec *EnvelopeCreate) createSpec() (*Envelope, *sqlgraph.CreateSpec) {
 	if value, ok := ec.mutation.CreatedAt(); ok {
 		_spec.SetField(envelope.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
+	}
+	if nodes := ec.mutation.AttachmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   envelope.AttachmentsTable,
+			Columns: []string{envelope.AttachmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(attachment.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

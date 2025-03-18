@@ -26,8 +26,29 @@ type Envelope struct {
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt    time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the EnvelopeQuery when eager-loading is set.
+	Edges        EnvelopeEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// EnvelopeEdges holds the relations/edges for other nodes in the graph.
+type EnvelopeEdges struct {
+	// Attachments holds the value of the attachments edge.
+	Attachments []*Attachment `json:"attachments,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// AttachmentsOrErr returns the Attachments value or an error if the edge
+// was not loaded in eager-loading.
+func (e EnvelopeEdges) AttachmentsOrErr() ([]*Attachment, error) {
+	if e.loadedTypes[0] {
+		return e.Attachments, nil
+	}
+	return nil, &NotLoadedError{edge: "attachments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -103,6 +124,11 @@ func (e *Envelope) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (e *Envelope) Value(name string) (ent.Value, error) {
 	return e.selectValues.Get(name)
+}
+
+// QueryAttachments queries the "attachments" edge of the Envelope entity.
+func (e *Envelope) QueryAttachments() *AttachmentQuery {
+	return NewEnvelopeClient(e.config).QueryAttachments(e)
 }
 
 // Update returns a builder for updating this Envelope.

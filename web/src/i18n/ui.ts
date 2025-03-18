@@ -30,6 +30,7 @@ const ui = {
     mailLoading: "Loading",
     cancel: "Cancel",
     confirm: "Confirm",
+    receiveNew: "Received new mail from {0}",
   },
   zh: {
     pageTitle: "临时邮箱 - 匿名的一次性邮箱",
@@ -54,6 +55,7 @@ const ui = {
     mailLoading: "加载中",
     cancel: "取消",
     confirm: "确认",
+    receiveNew: "收到来自 {0} 的新邮件",
   },
 }
 

@@ -9,6 +9,7 @@ type Config struct {
 	Port         string   `env:"PORT" envDefault:"3000"`
 	DomainList   []string `env:"DOMAIN_LIST"`
 	AdminAddress string   `env:"ADMIN_ADDRESS"`
+	BaseDir      string   `env:"BASE_DIR" envDefault:"fs"`
 	DB           Database `envPrefix:"DB_"`
 }
 

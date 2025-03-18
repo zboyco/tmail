@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Attachment is the client for interacting with the Attachment builders.
+	Attachment *AttachmentClient
 	// Envelope is the client for interacting with the Envelope builders.
 	Envelope *EnvelopeClient
 
@@ -145,6 +147,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Attachment = NewAttachmentClient(tx.config)
 	tx.Envelope = NewEnvelopeClient(tx.config)
 }
 
@@ -155,7 +158,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Envelope.QueryXXX(), the query will be executed
+// applies a query, for example: Attachment.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

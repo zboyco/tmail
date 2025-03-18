@@ -8,6 +8,28 @@ import (
 )
 
 var (
+	// AttachmentsColumns holds the columns for the "attachments" table.
+	AttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString, Size: 32},
+		{Name: "filename", Type: field.TypeString},
+		{Name: "filepath", Type: field.TypeString},
+		{Name: "content_type", Type: field.TypeString},
+		{Name: "envelope_attachments", Type: field.TypeInt, Nullable: true},
+	}
+	// AttachmentsTable holds the schema information for the "attachments" table.
+	AttachmentsTable = &schema.Table{
+		Name:       "attachments",
+		Columns:    AttachmentsColumns,
+		PrimaryKey: []*schema.Column{AttachmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "attachments_envelopes_attachments",
+				Columns:    []*schema.Column{AttachmentsColumns[4]},
+				RefColumns: []*schema.Column{EnvelopesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// EnvelopesColumns holds the columns for the "envelopes" table.
 	EnvelopesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -32,9 +54,11 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AttachmentsTable,
 		EnvelopesTable,
 	}
 )
 
 func init() {
+	AttachmentsTable.ForeignKeys[0].RefTable = EnvelopesTable
 }

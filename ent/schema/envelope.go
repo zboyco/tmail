@@ -2,6 +2,7 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"time"
@@ -31,5 +32,7 @@ func (Envelope) Indexes() []ent.Index {
 
 // Edges of the Envelope.
 func (Envelope) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("attachments", Attachment.Type),
+	}
 }

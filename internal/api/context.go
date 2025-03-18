@@ -10,14 +10,14 @@ import (
 
 type Context struct {
 	echo.Context
-	*ent.Client
 	*config.Config
+	ent *ent.Client
 }
 
 func Middleware(client *ent.Client, cfg *config.Config) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			return next(&Context{c, client, cfg})
+			return next(&Context{c, cfg, client})
 		}
 	}
 }

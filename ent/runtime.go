@@ -4,6 +4,7 @@ package ent
 
 import (
 	"time"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 	"tmail/ent/schema"
 )
@@ -12,6 +13,38 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	attachmentFields := schema.Attachment{}.Fields()
+	_ = attachmentFields
+	// attachmentDescFilename is the schema descriptor for filename field.
+	attachmentDescFilename := attachmentFields[1].Descriptor()
+	// attachment.FilenameValidator is a validator for the "filename" field. It is called by the builders before save.
+	attachment.FilenameValidator = attachmentDescFilename.Validators[0].(func(string) error)
+	// attachmentDescFilepath is the schema descriptor for filepath field.
+	attachmentDescFilepath := attachmentFields[2].Descriptor()
+	// attachment.FilepathValidator is a validator for the "filepath" field. It is called by the builders before save.
+	attachment.FilepathValidator = attachmentDescFilepath.Validators[0].(func(string) error)
+	// attachmentDescContentType is the schema descriptor for contentType field.
+	attachmentDescContentType := attachmentFields[3].Descriptor()
+	// attachment.ContentTypeValidator is a validator for the "contentType" field. It is called by the builders before save.
+	attachment.ContentTypeValidator = attachmentDescContentType.Validators[0].(func(string) error)
+	// attachmentDescID is the schema descriptor for id field.
+	attachmentDescID := attachmentFields[0].Descriptor()
+	// attachment.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	attachment.IDValidator = func() func(string) error {
+		validators := attachmentDescID.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(id string) error {
+			for _, fn := range fns {
+				if err := fn(id); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	envelopeFields := schema.Envelope{}.Fields()
 	_ = envelopeFields
 	// envelopeDescTo is the schema descriptor for to field.
