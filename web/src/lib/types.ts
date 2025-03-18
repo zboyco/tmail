@@ -4,4 +4,5 @@ export type Envelope = {
   from: string
   subject: string
   created_at: string
+  animate?: boolean
 }

@@ -7,8 +7,9 @@ import { toast } from "sonner"
 import EditAddress from "@/components/EditAddress.tsx"
 import History from "@/components/History.tsx"
 import { type language, useTranslations } from "@/i18n/ui.ts"
+import { clsx } from "clsx"
 
-function Actions({ lang }: { lang: string }) {
+function Actions({ lang, className }: { lang: string; className?: string }) {
   const t = useMemo(() => useTranslations(lang as language), [])
 
   function onRandom() {
@@ -20,7 +21,12 @@ function Actions({ lang }: { lang: string }) {
   }
 
   return (
-    <div className="bg-sidebar flex h-fit justify-center gap-2 border-x border-b py-2 sm:flex-col sm:rounded-b-md sm:p-3">
+    <div
+      className={clsx(
+        "bg-sidebar flex h-fit justify-center gap-2 border-x border-b py-2 duration-300 sm:flex-col sm:rounded-b-md sm:p-3",
+        className
+      )}
+    >
       <EditAddress lang={lang}>
         <Button>
           <FilePenLine />

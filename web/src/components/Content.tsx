@@ -17,6 +17,7 @@ import Mounted from "@/components/Mounted.tsx"
 import { Skeleton } from "@/components/ui/skeleton.tsx"
 import Detail from "@/components/Detail.tsx"
 import { type language, useTranslations } from "@/i18n/ui.ts"
+import { clsx } from "clsx"
 
 function Content({ lang }: { lang: string }) {
   const [latestId, setLatestId] = useState(-1)
@@ -87,6 +88,7 @@ function Content({ lang }: { lang: string }) {
       return
     }
     const e = await res.json()
+    e.animate = true
     setEnvelopes([e, ...envelopes])
     setLatestId(e.id)
   }
@@ -99,7 +101,7 @@ function Content({ lang }: { lang: string }) {
   }
 
   return (
-    <div className="flex w-full flex-col pb-4">
+    <div className="sm:animate-in sm:slide-in-from-right-2/3 flex w-full flex-col pb-4 duration-300">
       <div className="block sm:hidden">
         <Actions lang={lang} />
       </div>
@@ -142,7 +144,12 @@ function Content({ lang }: { lang: string }) {
         )}
         {envelopes.map((envelope) => (
           <Detail lang={lang} key={envelope.id} envelope={envelope}>
-            <div className="hover:bg-secondary group text-muted-foreground space-y-1 px-4 py-2 transition-colors hover:cursor-pointer">
+            <div
+              className={clsx(
+                "hover:bg-secondary group text-muted-foreground space-y-1 px-4 py-2 transition-colors duration-300 hover:cursor-pointer",
+                envelope.animate && "animate-in slide-in-from-right"
+              )}
+            >
               <div className="flex items-center gap-2">
                 <span className="text-foreground">{envelope.subject}</span>
                 <ExternalLink
