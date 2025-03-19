@@ -11,5 +11,6 @@ func Register(e *echo.Echo) {
 	g.GET("/fetch", api.Wrap(api.Fetch))
 	g.GET("/fetch/:id", api.Wrap(api.FetchDetail))
 	g.GET("/fetch/latest", api.Wrap(api.FetchLatest))
+	g.GET("/download/:id", api.Wrap(api.Download))
 	g.GET("/domain", api.Wrap(api.DomainList))
 }

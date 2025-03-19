@@ -7,9 +7,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog.tsx"
-import type { Envelope } from "@/lib/types.ts"
+import type { Attachment, Envelope } from "@/lib/types.ts"
 import { Button } from "@/components/ui/button.tsx"
-import { Minimize2, RotateCw } from "lucide-react"
+import { Download, Minimize2, Paperclip, RotateCw } from "lucide-react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { fetchError, fmtDate } from "@/lib/utils.ts"
 import { ABORT_SAFE } from "@/lib/constant.ts"
@@ -27,6 +27,7 @@ function Detail({
   const divRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
   const controller = useRef<AbortController>(null)
+  const [attachments, setAttachments] = useState<Attachment[]>([])
 
   const t = useMemo(() => useTranslations(lang as language), [])
 
@@ -35,15 +36,21 @@ function Detail({
       setLoading(true)
       controller.current = new AbortController()
       fetch("/api/fetch/" + envelope.id, { signal: controller.current.signal })
-        .then((res) => res.text())
+        .then((res) => res.json())
         .then((res) => {
-          divRef.current!.attachShadow({ mode: "open" }).innerHTML = res
+          setAttachments(res.attachments)
+          divRef.current!.attachShadow({ mode: "open" }).innerHTML = res.content
         })
         .catch(fetchError)
         .finally(() => setLoading(false))
       return
     }
+    setAttachments([])
     controller.current!.abort(ABORT_SAFE)
+  }
+
+  function onDownload(id: string) {
+    window.open(`/api/download/${id}`, "_blank")
   }
 
   return (
@@ -65,6 +72,27 @@ function Detail({
             </Button>
           </AlertDialogPrimitive.Cancel>
         </AlertDialogHeader>
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {attachments.map((a) => (
+              <div
+                className="bg-secondary text-muted-foreground hover:text-foreground group flex items-center gap-1 rounded-sm border px-2 py-1 text-sm hover:cursor-pointer hover:shadow-xs"
+                key={a.id}
+                onClick={() => onDownload(a.id)}
+              >
+                <Download
+                  className="animate-in fade-in hidden duration-500 group-hover:block"
+                  size={16}
+                />
+                <Paperclip
+                  className="animate-in fade-in duration-500 group-hover:hidden"
+                  size={16}
+                />
+                {a.filename}
+              </div>
+            ))}
+          </div>
+        )}
         <div ref={divRef} className="flex-1 overflow-auto border-t pt-4">
           {loading && (
             <div className="text-muted-foreground flex h-6.5 items-center justify-center gap-1">

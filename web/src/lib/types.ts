@@ -6,3 +6,8 @@ export type Envelope = {
   created_at: string
   animate?: boolean
 }
+
+export type Attachment = {
+  id: string
+  filename: string
+}

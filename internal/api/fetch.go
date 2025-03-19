@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 	"tmail/ent"
+	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 	"tmail/internal/pubsub"
 )
@@ -30,6 +31,16 @@ func Fetch(ctx *Context) error {
 	return ctx.JSON(http.StatusOK, list)
 }
 
+type MailDetail struct {
+	Content     string             `json:"content"`
+	Attachments []AttachmentDetail `json:"attachments"`
+}
+
+type AttachmentDetail struct {
+	ID       string `json:"id"`
+	Filename string `json:"filename"`
+}
+
 func FetchDetail(ctx *Context) error {
 	idStr := ctx.Param("id")
 	if idStr == "" {
@@ -39,7 +50,7 @@ func FetchDetail(ctx *Context) error {
 	if err != nil {
 		return ctx.Bad("invalid id param: " + idStr)
 	}
-	one, err := ctx.ent.Envelope.Query().
+	e, err := ctx.ent.Envelope.Query().
 		Select(envelope.FieldContent).
 		Where(envelope.ID(id)).
 		Only(ctx.Request().Context())
@@ -49,8 +60,19 @@ func FetchDetail(ctx *Context) error {
 	if err != nil {
 		return err
 	}
+	dbAttachments, _ := e.QueryAttachments().All(ctx.Request().Context())
+	attachments := make([]AttachmentDetail, 0, len(dbAttachments))
+	for _, a := range dbAttachments {
+		attachments = append(attachments, AttachmentDetail{
+			ID:       a.ID,
+			Filename: a.Filename,
+		})
+	}
 
-	return ctx.String(http.StatusOK, one.Content)
+	return ctx.JSON(http.StatusOK, MailDetail{
+		Content:     e.Content,
+		Attachments: attachments,
+	})
 }
 
 func FetchLatest(ctx *Context) error {
@@ -65,13 +87,13 @@ func FetchLatest(ctx *Context) error {
 		if err != nil {
 			return ctx.Bad("invalid id param: " + idStr)
 		}
-		one, err := ctx.ent.Envelope.Query().
+		e, err := ctx.ent.Envelope.Query().
 			Select(envelope.FieldID, envelope.FieldTo, envelope.FieldFrom, envelope.FieldSubject, envelope.FieldCreatedAt).
 			Where(envelope.IDGT(id), envelope.To(to)).
 			Order(ent.Asc(envelope.FieldID)).
 			First(ctx.Request().Context())
 		if err == nil {
-			return ctx.JSON(http.StatusOK, one)
+			return ctx.JSON(http.StatusOK, e)
 		}
 		if !ent.IsNotFound(err) {
 			return err
@@ -90,4 +112,18 @@ func FetchLatest(ctx *Context) error {
 	case <-ctx.Request().Context().Done():
 		return nil
 	}
+}
+
+func Download(ctx *Context) error {
+	id := ctx.Param("id")
+	if id == "" {
+		return ctx.Bad("not found id param")
+	}
+
+	a, err := ctx.ent.Attachment.Query().Where(attachment.ID(id)).First(ctx.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return ctx.Attachment(a.Filepath, a.Filename)
 }

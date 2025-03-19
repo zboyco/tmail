@@ -35,12 +35,12 @@ func Report(ctx *Context) error {
 		Save(ctx.Request().Context())
 	if err == nil {
 		go pubsub.Publish(e)
-		go attachment(ctx, envelope.Attachments, to, e.ID)
+		go saveAttachment(ctx, envelope.Attachments, to, e.ID)
 	}
 	return err
 }
 
-func attachment(ctx *Context, attachments []*enmime.Part, to string, ownerID int) {
+func saveAttachment(ctx *Context, attachments []*enmime.Part, to string, ownerID int) {
 	const maxSize = 200000000 // 200M
 	if len(attachments) == 0 {
 		return
