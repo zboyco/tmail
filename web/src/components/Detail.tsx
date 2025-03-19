@@ -76,7 +76,7 @@ function Detail({
           <div className="flex flex-wrap gap-1">
             {attachments.map((a) => (
               <div
-                className="bg-secondary text-muted-foreground hover:text-foreground group flex items-center gap-1 rounded-sm border px-2 py-1 text-sm hover:cursor-pointer hover:shadow-xs"
+                className="bg-secondary text-muted-foreground hover:text-foreground group flex items-center gap-1 rounded-sm border px-1.5 py-1 text-sm hover:cursor-pointer hover:shadow-xs"
                 key={a.id}
                 onClick={() => onDownload(a.id)}
               >
@@ -84,10 +84,7 @@ function Detail({
                   className="animate-in fade-in hidden duration-500 group-hover:block"
                   size={16}
                 />
-                <Paperclip
-                  className="animate-in fade-in duration-500 group-hover:hidden"
-                  size={16}
-                />
+                <Paperclip className="group-hover:hidden" size={16} />
                 {a.filename}
               </div>
             ))}
