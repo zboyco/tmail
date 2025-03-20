@@ -1,5 +1,6 @@
 package constant
 
 const (
-	DefaultLang = "en"
+	LangEn = "en"
+	LangZh = "zh"
 )

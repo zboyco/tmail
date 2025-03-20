@@ -6,7 +6,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"net/http"
 	"os"
+	"strings"
 	"tmail/config"
 	"tmail/ent"
 	"tmail/internal/api"
@@ -63,13 +65,24 @@ func i18n(next echo.HandlerFunc) echo.HandlerFunc {
 			return next(c)
 		}
 
-		al := c.Request().Header.Get("Accept-Language")
-		if al == "" {
-			al = constant.DefaultLang
-		}
-		lang := al[:2]
-
-		c.Request().URL.Path += lang + "/"
+		c.Request().URL.Path += getLang(c.Request()) + "/"
 		return next(c)
 	}
+}
+
+func getLang(req *http.Request) string {
+	if isGoogleBot(req) {
+		return constant.LangZh
+	}
+
+	if al := req.Header.Get("Accept-Language"); al != "" && al[:2] == constant.LangZh {
+		return constant.LangZh
+	}
+
+	return constant.LangEn
+}
+
+func isGoogleBot(req *http.Request) bool {
+	ua := req.Header.Get("User-Agent")
+	return strings.Contains(strings.ToLower(ua), "googlebot")
 }

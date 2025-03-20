@@ -79,8 +79,8 @@ function Content({ lang }: { lang: string }) {
       signal: controller.current!.signal,
     })
     if (!res.ok) {
-      toast.error((await res.json()).message)
       setTimeout(() => fetchLatest().catch(fetchError), 1000)
+      toast.error((await res.json()).message)
       return
     }
     if (res.status === 204) {
@@ -151,11 +151,11 @@ function Content({ lang }: { lang: string }) {
                 envelope.animate && "animate-in slide-in-from-right"
               )}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <span className="text-foreground">{envelope.subject}</span>
                 <ExternalLink
                   size={16}
-                  className="invisible group-hover:visible"
+                  className="invisible mx-2 hidden group-hover:visible sm:block"
                 />
                 <div className="flex-1" />
                 {envelope.to != address && <span>{envelope.to}</span>}
