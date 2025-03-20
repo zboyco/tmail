@@ -24,12 +24,19 @@
 
 ## 环境变量配置
 
-### TODO: 数据库配置
+### 数据库配置
+
+**目前仅支持 PostgreSQL**
+
+- `DB_HOST`: 数据库地址
+- `DB_PASS`: 数据库密码
+- `DB_NAME`: 数据库名称，默认`tmail`
 
 ### 必须
 - `DOMAIN_LIST`: 支持的域名列表，使用`,`分割，例如: `isco.eu.org,chato.eu.org`
 
 ### 非必须
+- `ADMIN_ADDRESS`: 管理员邮箱地址，可以查看所有邮件 (默认返回最新100条)
 - `HOST`: 服务监听地址，默认为`127.0.0.1`
 - `PORT`: 服务监听端口，默认为`3000`
 
@@ -45,7 +52,7 @@ _请修改其中的环境变量配置_
 ### Docker
 
 ```shell
-docker run --name tmail -d --restart unless-stopped -e 'HOST=0.0.0.0' -e 'DOMAIN_LIST=isco.eu.org,chato.eu.org' -p 3000:3000 sunls24/tmail
+docker run --name tmail -d --restart unless-stopped -e 'DB_HOST=127.0.0.1' -e 'DB_PASS=postgres' -e 'HOST=0.0.0.0' -e 'DOMAIN_LIST=isco.eu.org,chato.eu.org' -p 3000:3000 sunls24/tmail
 ```
 
 ### Docker Compose & Caddy (推荐)
@@ -64,7 +71,11 @@ services:
     network_mode: host
     restart: unless-stopped
     environment:
+      - "DB_HOST=127.0.0.1"
+      - "DB_PASS=postgres"
       - "DOMAIN_LIST=isco.eu.org,chato.eu.org"
+    volumes:
+      - ./tmail:/app/fs
 ```
 
 **Caddyfile**
