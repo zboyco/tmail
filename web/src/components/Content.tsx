@@ -161,8 +161,8 @@ function Content({ lang }: { lang: string }) {
                 {envelope.to != address && <span>{envelope.to}</span>}
               </div>
               <div className="flex justify-between text-sm">
-                <div>{fmtFrom(envelope.from)}</div>
-                <div>{fmtDate(envelope.created_at)}</div>
+                <div className="truncate">{fmtFrom(envelope.from)}</div>
+                <div className="shrink-0">{fmtDate(envelope.created_at)}</div>
               </div>
             </div>
           </Detail>

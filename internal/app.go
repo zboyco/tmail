@@ -75,7 +75,7 @@ func getLang(req *http.Request) string {
 		return constant.LangZh
 	}
 
-	if al := req.Header.Get("Accept-Language"); al != "" && al[:2] == constant.LangZh {
+	if al := req.Header.Get("Accept-Language"); strings.HasPrefix(al, constant.LangZh) {
 		return constant.LangZh
 	}
 

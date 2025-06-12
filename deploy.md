@@ -82,9 +82,9 @@ services:
 
 ```text
 mail.example.com {
-    encode zstd gzip
+	encode zstd gzip
 	@cache path /_astro/* /*.webp /favicon.svg
 	header @cache Cache-Control "public, max-age=31536000, immutable"
-    reverse_proxy 127.0.0.1:3000
+	reverse_proxy 127.0.0.1:3000
 }
 ```
