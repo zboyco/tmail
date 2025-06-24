@@ -20,6 +20,7 @@ RUN CGO_ENABLED=0 go build -ldflags '-s -w' -o tmail cmd/main.go
 FROM alpine AS runner
 WORKDIR /app
 COPY --from=builder /app/tmail .
+RUN apk add --no-cache tzdata
 
 ENV HOST=127.0.0.1
 ENV PORT=3000

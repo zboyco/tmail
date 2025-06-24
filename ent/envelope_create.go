@@ -39,9 +39,25 @@ func (ec *EnvelopeCreate) SetSubject(s string) *EnvelopeCreate {
 	return ec
 }
 
+// SetNillableSubject sets the "subject" field if the given value is not nil.
+func (ec *EnvelopeCreate) SetNillableSubject(s *string) *EnvelopeCreate {
+	if s != nil {
+		ec.SetSubject(*s)
+	}
+	return ec
+}
+
 // SetContent sets the "content" field.
 func (ec *EnvelopeCreate) SetContent(s string) *EnvelopeCreate {
 	ec.mutation.SetContent(s)
+	return ec
+}
+
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (ec *EnvelopeCreate) SetNillableContent(s *string) *EnvelopeCreate {
+	if s != nil {
+		ec.SetContent(*s)
+	}
 	return ec
 }
 
@@ -109,6 +125,14 @@ func (ec *EnvelopeCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (ec *EnvelopeCreate) defaults() {
+	if _, ok := ec.mutation.Subject(); !ok {
+		v := envelope.DefaultSubject
+		ec.mutation.SetSubject(v)
+	}
+	if _, ok := ec.mutation.Content(); !ok {
+		v := envelope.DefaultContent
+		ec.mutation.SetContent(v)
+	}
 	if _, ok := ec.mutation.CreatedAt(); !ok {
 		v := envelope.DefaultCreatedAt()
 		ec.mutation.SetCreatedAt(v)

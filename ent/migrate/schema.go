@@ -35,8 +35,8 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "to", Type: field.TypeString},
 		{Name: "from", Type: field.TypeString},
-		{Name: "subject", Type: field.TypeString},
-		{Name: "content", Type: field.TypeString},
+		{Name: "subject", Type: field.TypeString, Default: "no subject"},
+		{Name: "content", Type: field.TypeString, Default: "no content"},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// EnvelopesTable holds the schema information for the "envelopes" table.

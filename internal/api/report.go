@@ -26,7 +26,7 @@ func Report(ctx *Context) error {
 		content = envelope.Text
 	}
 
-	log.Info().Msgf("Report: %s <- %s", to, from)
+	log.Debug().Msgf("Report: %s <- %s: %s", to, from, subject)
 	e, err := ctx.ent.Envelope.Create().
 		SetTo(to).
 		SetFrom(from).
