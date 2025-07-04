@@ -32,13 +32,19 @@ func (App) init() {
 func (app App) Run() error {
 	app.init()
 	cfg := config.MustNew()
+	if cfg.Debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
 	client, err := ent.New(cfg.DB)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
-	schedule.New(client).Run()
+	schedule.New(client, cfg).Run()
 
 	e := echo.New()
 	e.Pre(i18n)

@@ -4,19 +4,23 @@ import (
 	"context"
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"time"
+	"tmail/config"
 	"tmail/ent"
 	"tmail/ent/attachment"
 	"tmail/ent/envelope"
 )
 
 type Scheduler struct {
-	db *ent.Client
+	db  *ent.Client
+	cfg *config.Config
 }
 
-func New(db *ent.Client) *Scheduler {
-	return &Scheduler{db: db}
+func New(db *ent.Client, cfg *config.Config) *Scheduler {
+	return &Scheduler{db: db, cfg: cfg}
 }
 
 func (s *Scheduler) Run() {
@@ -25,6 +29,7 @@ func (s *Scheduler) Run() {
 
 func (s *Scheduler) cleanUpExpired() {
 	run(func() {
+		go removeEmptyDir(s.cfg.BaseDir)
 		expired := time.Now().Add(-time.Hour * 240)
 		list, err := s.db.Attachment.Query().Where(attachment.HasOwnerWith(envelope.CreatedAtLT(expired))).All(context.TODO())
 		if err != nil {
@@ -51,6 +56,31 @@ func (s *Scheduler) cleanUpExpired() {
 			log.Info().Msgf("clean up expired %d", count)
 		}
 	}, time.Hour)
+}
+
+func removeEmptyDir(baseDir string) {
+	err := filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() || path == baseDir {
+			return nil
+		}
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+		if len(entries) == 0 {
+			if err = os.Remove(path); err != nil {
+				return err
+			}
+			return filepath.SkipDir
+		}
+		return nil
+	})
+	if err != nil {
+		log.Err(err).Msg("removeEmptyDir")
+	}
 }
 
 func run(fn func(), dur time.Duration) {

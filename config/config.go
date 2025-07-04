@@ -11,6 +11,7 @@ type Config struct {
 	AdminAddress string   `env:"ADMIN_ADDRESS"`
 	BaseDir      string   `env:"BASE_DIR" envDefault:"fs"`
 	DB           Database `envPrefix:"DB_"`
+	Debug        bool     `env:"DEBUG"`
 }
 
 type Database struct {
