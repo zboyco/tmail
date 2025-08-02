@@ -66,7 +66,7 @@ func saveAttachment(ctx *Context, attachments []*enmime.Part, to string, ownerID
 		}
 
 		_, err := ctx.ent.Attachment.Create().
-			SetID(filepath.Base(dir) + name[:16]).
+			SetID(filepath.Base(dir) + name[:6] + utils.RandomStr(4)).
 			SetFilename(a.FileName).
 			SetFilepath(fp).
 			SetContentType(a.ContentType).

@@ -18,8 +18,8 @@ func (Envelope) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("to").NotEmpty(),
 		field.String("from").NotEmpty(),
-		field.String("subject").NotEmpty().Default("no subject"),
-		field.String("content").NotEmpty().Default("no content"),
+		field.String("subject").Default("no subject"),
+		field.String("content").Default("no content"),
 		field.Time("created_at").Default(time.Now),
 	}
 }

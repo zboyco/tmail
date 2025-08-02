@@ -179,16 +179,6 @@ func (eu *EnvelopeUpdate) check() error {
 			return &ValidationError{Name: "from", err: fmt.Errorf(`ent: validator failed for field "Envelope.from": %w`, err)}
 		}
 	}
-	if v, ok := eu.mutation.Subject(); ok {
-		if err := envelope.SubjectValidator(v); err != nil {
-			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Envelope.subject": %w`, err)}
-		}
-	}
-	if v, ok := eu.mutation.Content(); ok {
-		if err := envelope.ContentValidator(v); err != nil {
-			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Envelope.content": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -445,16 +435,6 @@ func (euo *EnvelopeUpdateOne) check() error {
 	if v, ok := euo.mutation.From(); ok {
 		if err := envelope.FromValidator(v); err != nil {
 			return &ValidationError{Name: "from", err: fmt.Errorf(`ent: validator failed for field "Envelope.from": %w`, err)}
-		}
-	}
-	if v, ok := euo.mutation.Subject(); ok {
-		if err := envelope.SubjectValidator(v); err != nil {
-			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Envelope.subject": %w`, err)}
-		}
-	}
-	if v, ok := euo.mutation.Content(); ok {
-		if err := envelope.ContentValidator(v); err != nil {
-			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Envelope.content": %w`, err)}
 		}
 	}
 	return nil

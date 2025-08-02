@@ -64,12 +64,8 @@ var (
 	FromValidator func(string) error
 	// DefaultSubject holds the default value on creation for the "subject" field.
 	DefaultSubject string
-	// SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
-	SubjectValidator func(string) error
 	// DefaultContent holds the default value on creation for the "content" field.
 	DefaultContent string
-	// ContentValidator is a validator for the "content" field. It is called by the builders before save.
-	ContentValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 )

@@ -59,14 +59,10 @@ func init() {
 	envelopeDescSubject := envelopeFields[2].Descriptor()
 	// envelope.DefaultSubject holds the default value on creation for the subject field.
 	envelope.DefaultSubject = envelopeDescSubject.Default.(string)
-	// envelope.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
-	envelope.SubjectValidator = envelopeDescSubject.Validators[0].(func(string) error)
 	// envelopeDescContent is the schema descriptor for content field.
 	envelopeDescContent := envelopeFields[3].Descriptor()
 	// envelope.DefaultContent holds the default value on creation for the content field.
 	envelope.DefaultContent = envelopeDescContent.Default.(string)
-	// envelope.ContentValidator is a validator for the "content" field. It is called by the builders before save.
-	envelope.ContentValidator = envelopeDescContent.Validators[0].(func(string) error)
 	// envelopeDescCreatedAt is the schema descriptor for created_at field.
 	envelopeDescCreatedAt := envelopeFields[4].Descriptor()
 	// envelope.DefaultCreatedAt holds the default value on creation for the created_at field.

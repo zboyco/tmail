@@ -160,18 +160,8 @@ func (ec *EnvelopeCreate) check() error {
 	if _, ok := ec.mutation.Subject(); !ok {
 		return &ValidationError{Name: "subject", err: errors.New(`ent: missing required field "Envelope.subject"`)}
 	}
-	if v, ok := ec.mutation.Subject(); ok {
-		if err := envelope.SubjectValidator(v); err != nil {
-			return &ValidationError{Name: "subject", err: fmt.Errorf(`ent: validator failed for field "Envelope.subject": %w`, err)}
-		}
-	}
 	if _, ok := ec.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Envelope.content"`)}
-	}
-	if v, ok := ec.mutation.Content(); ok {
-		if err := envelope.ContentValidator(v); err != nil {
-			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Envelope.content": %w`, err)}
-		}
 	}
 	if _, ok := ec.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Envelope.created_at"`)}
