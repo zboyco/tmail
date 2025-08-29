@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	"tmail/ent"
 	"tmail/ent/attachment"
 	"tmail/ent/envelope"
@@ -107,7 +108,7 @@ func FetchLatest(ctx *Context) error {
 	select {
 	case e := <-ch:
 		return ctx.JSON(http.StatusOK, e)
-	case <-time.After(time.Minute):
+	case <-time.After(time.Second * 10):
 		return ctx.NoContent(http.StatusNoContent)
 	case <-ctx.Request().Context().Done():
 		return nil
