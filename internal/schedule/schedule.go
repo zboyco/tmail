@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	"tmail/config"
 	"tmail/ent"
 	"tmail/ent/attachment"
@@ -31,7 +32,7 @@ func (s *Scheduler) Run() {
 func (s *Scheduler) cleanUpExpired() {
 	run(func() {
 		go removeEmptyDir(s.cfg.BaseDir)
-		expired := time.Now().Add(-time.Hour * 240)
+		expired := time.Now().Add(-time.Hour * 24 * 90)
 		list, err := s.db.Attachment.Query().Where(attachment.HasOwnerWith(envelope.CreatedAtLT(expired))).All(context.TODO())
 		if err != nil {
 			log.Err(err).Msg("Attachment Query")
