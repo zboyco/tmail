@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
 	"tmail/ent"
 	"tmail/ent/attachment"
 	"tmail/ent/envelope"
@@ -156,7 +157,7 @@ func FetchLatest(ctx context.Context, req ReqFetchLatest) (*server.Reply, error)
 	select {
 	case v := <-ch:
 		return server.OK(v), nil
-	case <-time.After(time.Minute):
+	case <-time.After(time.Second * 10):
 		return server.StatusCode(http.StatusNoContent), nil
 	case <-ctx.Done():
 		return server.Handled(), nil

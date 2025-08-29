@@ -2,3 +2,6 @@
 .DS_Store
 .env*
 tmail
+.env
+tmail
+/.cunzhi-memory

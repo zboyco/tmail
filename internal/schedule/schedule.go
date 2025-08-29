@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
 	"tmail/ent"
 	"tmail/ent/attachment"
 	"tmail/ent/envelope"
@@ -33,7 +34,7 @@ func (s *Scheduler) Run() {
 func (s *Scheduler) cleanUpExpired() {
 	cron.RunRepeat(func() {
 		defer removeEmptyDir(api.Config(s.ctx).BaseDir)
-		expired := time.Now().Add(-time.Hour * 240)
+		expired := time.Now().Add(-time.Hour * 24 * 90)
 		attachmentCount, err := cleanUpAttachments(s.ctx, expired)
 		if err != nil {
 			slog.Error("Attachment cleanup", "err", err)
